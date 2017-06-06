@@ -17,7 +17,7 @@
     iADD: .asciiz "ADD "
     iADDI: .asciiz "ADDI "
     iJ: .asciiz "J "
-    iNOOP: .asciiz "NOOP "
+    iNOOP: .asciiz "NOOP"
     iMULT: .asciiz "MULT "
     iJR: .asciiz "JR "
     iJAL: .asciiz "JAL "
@@ -64,6 +64,10 @@
     
     beq $t7 0 isAdd
     beq $t7 1 isAddi
+    beq $t7 2 isJ
+    beq $t7 3 isNoop
+    beq $t7 4 isJal
+    beq $t7 5 isJr
     
     b false
 
@@ -377,6 +381,155 @@
         li $t5 0
     
         ENDisAdd:
+        b endOfComparison
+    
+    ##### JR #####
+    isJr:
+        li $t5 1
+    
+        li $t3 0 # pattern
+        li $t4 0 # word
+    
+        isJrLoop:
+        lb $t0 line($t4)
+        lb $t1 iJR($t3)
+        
+        bne $t0 $t1 ENDisJrWithError
+        
+        beq $t4 2 jrRegister
+    
+        addi $t3 $t3 1
+        addi $t4 $t4 1
+        b isJrLoop
+    
+        jrRegister:
+	addi $t4 $t4 1
+	
+        jal isRegister
+        
+        bne $t5 1 ENDisJrWithError
+        
+        addi $t4 $t4 1
+        lb $t0 line($t4)
+        lw $t2 newlineNumber
+
+        bne $t0 $t2 ENDisJrWithError
+                        
+        b ENDisJr
+        
+        ENDisJrWithError:
+        li $t5 0
+    
+        ENDisJr:
+        b endOfComparison
+    
+    ##### J #####
+    isJ:
+        li $t5 1
+    
+        li $t3 0 # pattern
+        li $t4 0 # word
+    
+        isJLoop:
+        lb $t0 line($t4)
+        lb $t1 iJ($t3)
+        
+        bne $t0 $t1 ENDisJWithError
+        
+        beq $t4 1 jLabel
+    
+        addi $t3 $t3 1
+        addi $t4 $t4 1
+        b isJLoop
+    
+        jLabel:
+	addi $t4 $t4 1
+	
+        jal isLabel
+        
+        bne $t5 1 ENDisJWithError
+        
+        lb $t0 line($t4)
+        
+        bne $t0 10 ENDisJWithError
+                    
+        b ENDisJ
+        
+        ENDisJWithError:
+        li $t5 0
+    
+        ENDisJ:
+        b endOfComparison
+    
+    ##### JAL #####
+    isJal:
+        li $t5 1
+    
+        li $t3 0 # pattern
+        li $t4 0 # word
+    
+        isJalLoop:
+        lb $t0 line($t4)
+        lb $t1 iJAL($t3)
+        
+        bne $t0 $t1 ENDisJalWithError
+        
+        beq $t4 3 jalLabel
+    
+        addi $t3 $t3 1
+        addi $t4 $t4 1
+        b isJalLoop
+    
+        jalLabel:
+	addi $t4 $t4 1
+	
+        jal isLabel
+        
+        bne $t5 1 ENDisJalWithError
+        
+        lb $t0 line($t4)
+        
+        bne $t0 10 ENDisJalWithError
+                    
+        b ENDisJal
+        
+        ENDisJalWithError:
+        li $t5 0
+    
+        ENDisJal:
+        b endOfComparison
+    
+    ##### NOOP #####
+    isNoop:
+        li $t5 1
+    
+        li $t3 0 # pattern
+        li $t4 0 # word
+    
+        isNoopLoop:
+        lb $t0 line($t4)
+        lb $t1 iNOOP($t3)
+        
+        bne $t0 $t1 ENDisNoopWithError
+        
+        beq $t4 3 noopNewLine
+    
+        addi $t3 $t3 1
+        addi $t4 $t4 1
+        b isNoopLoop
+    
+        noopNewLine:
+	addi $t4 $t4 1
+        lb $t0 line($t4)
+        
+        bne $t0 10 ENDisNoopWithError
+                        
+        b ENDisNoop
+        
+        ENDisNoopWithError:
+        li $t5 0
+    
+        ENDisNoop:
         b endOfComparison
         
     saveLine:
